@@ -1,7 +1,13 @@
 const catchAsync = require('../util/catchAsync');
 const db = require('../models')
 const axios = require('axios');
+const yup = require('yup');
+
 db.category.hasMany(db.report_display, { as: "json_paths", foreignKey: 'category_id' });
+
+const schema = yup.object({
+    visit_id: yup.string().max(50, 'Maximum length for visit_id are 50').required()
+});
 
 const getVisit = catchAsync(async (req, res) => {
     const {visit_id: visitId} = req.params
@@ -23,6 +29,15 @@ const getVisit = catchAsync(async (req, res) => {
 const getReportDisplay = catchAsync(async (req, res) => {
     /** logic here */
     const visit_id = req.body.visit_id
+    const validate = schema.validate({
+        visit_id: visit_id
+    });
+
+    if (validate.error) {
+        res.status(400).json({
+            message: validate.errors
+        });
+    }
 
     //Query report
     const getReport = await db.sequelize.query(
@@ -91,6 +106,15 @@ const getReportProduct = catchAsync(async (req, res) => {
     let product = []
     const count = {};
     const visit_id = req.body.visit_id
+    const validate = schema.validate({
+        visit_id: visit_id
+    });
+
+    if (validate.error) {
+        res.status(400).json({
+            message: validate.error
+        });
+    }
     //Query JSON Path
     const getJsonPath = await db.report_display.findAll({
         where: {
@@ -154,6 +178,15 @@ const getReportProduct = catchAsync(async (req, res) => {
 const batchReportProduct = catchAsync(async (req, res) => {
     /** logic here */
     const visit_id = req.body.visit_id
+    const validate = schema.validate({
+        visit_id: visit_id
+    });
+
+    if (validate.error) {
+        res.status(400).json({
+            message: validate.error
+        });
+    }
     let { PORT } = process.env
     let getReportProduct = await axios.post(`http://localhost:${ PORT }/product-visit`,{visit_id: visit_id})
     
